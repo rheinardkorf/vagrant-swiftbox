@@ -14,9 +14,9 @@ Vagrant Swiftbox requires recent versions of both Vagrant and VirtualBox to be i
 
 ## Getting Started
 
+1. Use any local operating system such as Mac OS X, Linux, or Windows.
 1. Download or clone this repository to your local machine.
 	* Using git: `git clone git://github.com/rheinardkorf/vagrant-swiftbox swiftbox`
-1. Use any local operating system such as Mac OS X, Linux, or Windows.
 1. Install [VirtualBox 4.3.x](https://www.virtualbox.org/wiki/Downloads)
 1. Install [Vagrant 1.6.x](http://www.vagrantup.com/downloads.html)
     * `vagrant` will now be available as a command in your terminal, try it out.
