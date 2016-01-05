@@ -13,6 +13,10 @@
 *.o
 *.so
 
+# Projects #
+############
+projects/
+
 # Development Libraries #
 #########################
 node_modules/
