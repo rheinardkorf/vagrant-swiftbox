@@ -51,7 +51,7 @@ Vagrant.configure("2") do |config|
   # You can also let the guest machine use DHCP to assign an IP address.
   #
   # Using DHCP:
-  # config.vm.network :public
+  config.vm.network :public_network
   #
   # Using an adapter bridge:
   # config.vm.network :public_network, :bridge => 'en0: Wi-Fi (AirPort)', ip: '192.168.2.101'
