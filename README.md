@@ -1,3 +1,4 @@
+<img src="http://i.imgur.com/7qXPxR9.png" alt="Vagrant Swiftbox og:image" width="320" />
 Version: 0.2
 
 # Vagrant Swiftbox (vagrant-swiftbox)
