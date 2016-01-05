@@ -49,9 +49,27 @@ apt_package_check_list=(
 	vim
 	colordiff
 	postfix
-	clang
-	emacs
-	emacs-goodies-el
+	# emacs
+	# emacs-goodies-el
+
+	# Req'd for building Swift from source
+	git
+	cmake
+	ninja-build
+	clang-3.4
+	clang-3.6
+	python
+	uuid-dev
+	libicu-dev
+	icu-devtools
+	libbsd-dev
+	libedit-dev
+	libxml2-dev
+	libsqlite3-dev
+	swig
+	libpython-dev
+	libncurses5-dev
+	pkg-config
 
 	# ntp service to keep clock current
 	ntp
@@ -73,7 +91,6 @@ apt_package_check_list=(
 )
 
 echo "Check for apt packages to install..."
-
 # Loop through each of our packages that should be installed on the system. If
 # not yet installed, it should be added to the array of packages to install.
 for pkg in "${apt_package_check_list[@]}"; do
@@ -93,6 +110,7 @@ done
 echo "inet_protocols = ipv4" >> /etc/postfix/main.cf
 
 if [[ $ping_result == "Connected" ]]; then
+
 	# If there are any packages to be installed in the apt_package_list array,
 	# then we'll run `apt-get update` and then `apt-get install` to proceed.
 	if [[ ${#apt_package_install_list[@]} = 0 ]]; then
@@ -183,17 +201,63 @@ if [[ $ping_result == "Connected" ]]; then
 	echo "Adding graphviz symlink for Webgrind..."
 	ln -sf /usr/bin/dot /usr/local/bin/dot
 
-	echo "Downloading Swift..."
-	cd ~
-	curl 'https://swift.org/builds/ubuntu1404/swift-2.2-SNAPSHOT-2015-12-01-b/swift-2.2-SNAPSHOT-2015-12-01-b-ubuntu14.04.tar.gz' > swift.tar.gz
-	echo "Extracting Swift..."
-	mkdir swift-tools
-	tar -zxvf swift.tar.gz -C ./swift-tools/ --strip-components=1
-	echo "Installing Swift..."
-	cd ~/swift-tools/usr/
-	sudo rsync --remove-source-files -rl ./ /usr/local/
-	cd ~
-	rm -rf swift-tools
+	use_provisioner=false
+	provisioner=false
+	for i in "$@"
+	do
+		if [[ "$use_provisioner" = "true" ]] && [[ "$provisioner" = "false" ]]
+		then
+			provisioner=$i
+		fi
+
+		if [ "$i" = "--provision-with" ]
+		then
+			use_provisioner=true
+		fi
+	done
+
+	if [ "$provisioner" = "source" ]
+	then
+		# ---------------------------------------------
+		# Building Swift from source
+		# ---------------------------------------------
+		echo "Setting up build environment..."
+		sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.6 100
+		sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.6 100
+
+		cd ~
+		mkdir swift-src
+		cd ~/swift-src
+		echo "Download Swift source..."
+		git clone https://github.com/apple/swift.git
+		cd swift
+		echo "Download Swift dependencies..."
+		./utils/update-checkout --clone
+		echo "Building Swift from source..."
+		./utils/build-script --preset=buildbot_linux_1404 install_destdir=~/swift-build installable_package=~/swift.tar.gz
+		sudo rsync -rl .~/swift-build/usr/ /usr/
+		# ---------------------------------------------
+		# END - Building Swift from source
+		# ---------------------------------------------
+	else
+		# ---------------------------------------------
+		# Install Swift from Binaries
+		# ---------------------------------------------
+		echo "Downloading Swift..."
+		cd ~
+		curl 'https://swift.org/builds/ubuntu1404/swift-2.2-SNAPSHOT-2015-12-31-a/swift-2.2-SNAPSHOT-2015-12-31-a-ubuntu14.04.tar.gz' > swift.tar.gz
+		echo "Extracting Swift..."
+		mkdir swift-tools
+		tar -zxvf swift.tar.gz -C ./swift-tools/ --strip-components=1
+		echo "Installing Swift..."
+		cd ~/swift-tools/usr/
+		sudo rsync --remove-source-files -rl ./ /usr/
+		cd ~
+		rm -rf swift-tools
+		# ---------------------------------------------
+		# END - Install Swift from Binaries
+		# ---------------------------------------------
+	fi
 
 else
 	echo -e "\nNo network connection available, skipping package installation"

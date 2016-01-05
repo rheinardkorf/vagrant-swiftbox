@@ -28,7 +28,6 @@ Vagrant.configure("2") do |config|
   # box containing the Ubuntu 14.04 Trusty 64 bit release. Once this box is downloaded
   # to your host computer, it is cached for future use under the specified box name.
   config.vm.box = "ubuntu/trusty64"
-
   config.vm.hostname = "swiftbox"
 
   # Default Box IP Address
@@ -47,10 +46,15 @@ Vagrant.configure("2") do |config|
   # To enable outside access to the virtual machine, a line similar to the following is
   # required. Look for the IP address and adapter name in VirtualBox or by running
   # `vboxmanage list bridgedifs` in a terminal on the host system. The common adapter name
-  # in OSX is `en0: Wi-Fi (AirPort)`. You will likely find a variety similar to the example
-  # below on Windows hosts.
+  # in OSX is `en0: Wi-Fi (AirPort)`. You will need to determine your adapter on windows.
   #
-  config.vm.network :public_network, :bridge => 'en0: Wi-Fi (AirPort)', ip: '192.168.2.101'
+  # You can also let the guest machine use DHCP to assign an IP address.
+  #
+  # Using DHCP:
+  # config.vm.network :public
+  #
+  # Using an adapter bridge:
+  # config.vm.network :public_network, :bridge => 'en0: Wi-Fi (AirPort)', ip: '192.168.2.101'
 
   # Drive mapping
   #
@@ -67,18 +71,6 @@ Vagrant.configure("2") do |config|
   # a mapped directory inside the VM will be created that contains these files.
   config.vm.synced_folder "projects/", "/srv/projects"
 
-  # Customfile - POSSIBLY UNSTABLE
-  #
-  # Use this to insert your own (and possibly rewrite) Vagrant config lines. Helpful
-  # for mapping additional drives. If a file 'Customfile' exists in the same directory
-  # as this Vagrantfile, it will be evaluated as ruby inline as it loads.
-  #
-  # Note that if you find yourself using a Customfile for anything crazy or specifying
-  # different provisioning, then you may want to consider a new Vagrantfile entirely.
-  if File.exists?(File.join(vagrant_dir,'Customfile')) then
-    eval(IO.read(File.join(vagrant_dir,'Customfile')), binding)
-  end
-
   # Provisioning
   #
   # Process one or more provisioning scripts depending on the existence of custom files.
@@ -87,7 +79,8 @@ Vagrant.configure("2") do |config|
   # should run before the shell commands laid out in provision.sh (or your provision-custom.sh
   # file) should go in this script. If it does not exist, no extra provisioning will run.
   if File.exists?(File.join(vagrant_dir,'provision','provision-pre.sh')) then
-    config.vm.provision :shell, :path => File.join( "provision", "provision-pre.sh" )
+    config.vm.provision :shell, :path => File.join( "provision", "provision-pre.sh" ), :args => ARGV
+    config.vm.provision "source", :type => "shell", :path => File.join( "provision", "provision-pre.sh" ), :args => ARGV
   end
 
   # provision.sh or provision-custom.sh
@@ -97,9 +90,11 @@ Vagrant.configure("2") do |config|
   # created, that is run as a replacement. This is an opportunity to replace the entirety
   # of the provisioning provided by default.
   if File.exists?(File.join(vagrant_dir,'provision','provision-custom.sh')) then
-    config.vm.provision :shell, :path => File.join( "provision", "provision-custom.sh" )
+    config.vm.provision :shell, :path => File.join( "provision", "provision-custom.sh" ), :args => ARGV
+    config.vm.provision "source", :type => "shell", :path => File.join( "provision", "provision-custom.sh" ), :args => ARGV
   else
-    config.vm.provision :shell, :path => File.join( "provision", "provision.sh" )
+    config.vm.provision :shell, :path => File.join( "provision", "provision.sh" ), :args => ARGV
+    config.vm.provision "source", :type => "shell", :path => File.join( "provision", "provision.sh" ), :args => ARGV
   end
 
   # provision-post.sh acts as a post-hook to the default provisioning. Anything that should
@@ -107,7 +102,8 @@ Vagrant.configure("2") do |config|
   # put into this file. This provides a good opportunity to install additional packages
   # without having to replace the entire default provisioning script.
   if File.exists?(File.join(vagrant_dir,'provision','provision-post.sh')) then
-    config.vm.provision :shell, :path => File.join( "provision", "provision-post.sh" )
+    config.vm.provision :shell, :path => File.join( "provision", "provision-post.sh" ), :args => ARGV
+    config.vm.provision "source", :type => "shell", :path => File.join( "provision", "provision-post.sh" ), :args => ARGV
   end
 
   # Vagrant Triggers
@@ -119,13 +115,18 @@ Vagrant.configure("2") do |config|
   # into the VM and execute things.
   if defined? VagrantPlugins::Triggers
     config.trigger.before :halt, :stdout => true do
-      run "vagrant ssh -c 'vagrant_halt'"
+    # Commands to run when "vagrant halt" is called on the host machine
+    #
+    # To run a command on the guest machine, use "vagrant ssh -c <command>"
+    #
+    # Example:
+    #   run "vagrant ssh -c 'my_shutdown_script'"
     end
     config.trigger.before :suspend, :stdout => true do
-      run "vagrant ssh -c 'vagrant_suspend'"
+    # Commands to run when "vagrant suspend" is called on the host machine
     end
     config.trigger.before :destroy, :stdout => true do
-      run "vagrant ssh -c 'vagrant_destroy'"
+    # Commands to run when "vagrant destroy" is called on the host machine
     end
   end
 end
