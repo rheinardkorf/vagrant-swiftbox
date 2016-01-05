@@ -70,7 +70,7 @@ If you don't want to wait for the binaries to be updated; you want to contribute
 	* `git pull`  
 1. Update all related projects by typing:  
 	* `~/swift-src/swift`
-	* `./utils/update-checkout --clone`
+	* `./utils/update-checkout`
 1. Build the project and install:
 	* `./utils/build-script --preset=buildbot_linux_1404 install_destdir=~/swift-build installable_package=~/swift.tar.gz`  
 	* `sudo rsync -rl .~/swift-build/usr/ /usr/`  
